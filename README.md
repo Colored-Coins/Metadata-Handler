@@ -45,10 +45,27 @@ var handler = new MetadataHandler(settings)
 
 ### Fetch Metadata
 
+Params:
+  - torrentHash - The torrent infoHash of the metadata.
+  - metadataSHA2 - The sha256 of the metadata json.
+  - importent - A boolean flag which determines if the metadata will be saved forever or possibly deleted when folder reaches max limit size.
+
 ```js
 
 var torrentHash = '5add2b0ce8f7da372c856d4efe6b9b6e8584919e'
 var metadataSHA2 = '6ed0dd02806fa89e25de060c19d3ac86cabb87d6a0ddd05c333b84f4'
+var importent = true
+
+handler.getMetadata(torrentHash, metadataSHA2, importent, function (err, metadata) {
+  if (err) return console.error(err)
+  console.log(metadata) // Will print the json file of the metadata
+})
+
+```
+
+You can also use this method together with an event listner like this:
+
+```js
 
 // You can listen for the channel of the torrentHash to get the metadata
 handler.on('downloads/'+torrentHash, function (err, metadata) {
@@ -57,23 +74,22 @@ handler.on('downloads/'+torrentHash, function (err, metadata) {
 })
 
 // Starting the proccess of getting the metadata from the torrent network.
-handler.getMetadata(torrentHash, metadataSHA2)
-
-// Or you can provide a callback and the metadata will also be returned
-// through it
-
-handler.getMetadata(torrentHash, metadataSHA2, (err, metadata) {
-  if (err) return console.error(err)
-  console.log(metadata) // Will print the json file of the metadata
-})
+handler.getMetadata(torrentHash, metadataSHA2, importent)
 
 ```
 
-### Create new Metadata hashes
+### Add new Metadata
+
+Params:
+  - metadata - A new metadata json we just created and we plan on sharing with other people.
 
 ```js
 
-handler.createHash(metadata, function (err, hashes) {
+// Creates the torrent file and sha2 for the metadata.
+// Saves the metadata as a local torrentHash.dat file.
+// Saves the torrent file called torrentHash.torrent for future use.
+// Returns the torrentHash and sha2 created.
+handler.addMetadata(metadata, function (err, hashes) {
   if (err) return console.error(err)
   console.log(hashes.torrentHash) // Will print Bit-torrent hashing scheme using sha1 as the hashing algorithem
   console.log(hashes.sha2) // Will print the sha256 of the raw metadata file
@@ -83,6 +99,9 @@ handler.createHash(metadata, function (err, hashes) {
 
 ### Share Metadata
 
+Params:
+  - torrentHash - The torrent info hash of the metadata we want to share with other people
+
 ```js
 
 // You can listen for the channel of the torrentHash to get the metadata
@@ -91,7 +110,9 @@ handler.on('uploads/'+torrentHash, function (err, peer) {
   console.log(peer) // Will print information about the latest peer that is trying to download the metadata from your client
 })
 
-handler.shareHash(torrentHash)
+handler.shareMetadata(torrentHash, function (err) {
+  if (err) console.log(err) // Returns error if there is problem with sharing the file
+})
 
 ```
 
@@ -106,10 +127,10 @@ handler.on('downloads', function (err, metadata) {
 })
 
 // Receives the latest peer that is trying to get a file from our client and the file it's trying to get
-handler.on('uploads', function (err, data) {
+handler.on('uploads', function (err, peer) {
   if (err) return console.error(err)
-  console.log(data.peer) // Will print info about the peer
-  console.log(data.file) // Will print info about the file
+  console.log(peer.info) // Will print info about the peer
+  console.log(peer.file) // Will print info about the file
 })
 
 ```

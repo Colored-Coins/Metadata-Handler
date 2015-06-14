@@ -46,6 +46,23 @@ var MetadataFetcher = function (customProperties) {
 
 util.inherits(MetadataFetcher, events.EventEmitter)
 
+// MetadataFetcher.prototype.getMetadata = function (torrentHash, metadataSHA2, importent, cb) {
+
+// }
+
+// MetadataFetcher.prototype.addMetadata = function (metadata, cb) {
+
+// }
+
+// MetadataFetcher.prototype.shareMetadata = function (torrentHash, cb) {
+
+// }
+
+// this.emit('downloads', err, metadata)
+// this.emit('downloads/' + torrentHash, err, peer)
+// this.emit('uploads', err, peer)
+// this.emit('uploads/' + torrentHash, err, metadata)
+
 var saveTorrentToFolder = function (folder, maxConns) {
   return function (torrent) {
     // Got torrent metadata!
