@@ -15,6 +15,7 @@ var Table = require('cli-table')
 var moment = require('moment')
 var betterConsole = require('better-console')
 var events = require('events')
+var hash = require('crypto-hashing')
 
 var MetadataFetcher = function (customProperties) {
   try {
@@ -50,9 +51,9 @@ util.inherits(MetadataFetcher, events.EventEmitter)
 
 // }
 
-// MetadataFetcher.prototype.addMetadata = function (metadata, cb) {
-
-// }
+MetadataFetcher.prototype.addMetadata = function (metadata, cb) {
+  var hash256 = hash.sha256(metadata)
+}
 
 // MetadataFetcher.prototype.shareMetadata = function (torrentHash, cb) {
 
@@ -76,65 +77,6 @@ var saveTorrentToFolder = function (folder, maxConns) {
       source.pipe(destination)
     })
   }
-}
-
-var formatBytes = function (bytes, decimals) {
-  if (bytes === 0) return '0 Byte'
-  var k = 1024
-  var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-  var i = Math.floor(Math.log(bytes) / Math.log(k))
-  return (bytes / Math.pow(k, i)).toPrecision(decimals + 1) + ' ' + sizes[i]
-}
-
-MetadataFetcher.prototype.cliView = function () {
-  this.cliViewStatus = !this.cliViewStatus
-}
-
-MetadataFetcher.prototype.streamClientData = function () {
-  this.streamData = !this.streamData
-  var self = this
-  var dataStream = setInterval(function () {
-    if (!self.streamData) return clearInterval(dataStream)
-    var table = new Table({
-      head: [
-        'Name',
-        'Info hash',
-        'Size',
-        'Peers',
-        'Connections',
-        'Time remaining',
-        'Progress',
-        'Downloaded',
-        'Download speed',
-        'Uploaded',
-        'Upload speed',
-        'Ratio'
-      ]
-    })
-    var dataSet = self.client.torrents.map(function (torrent) {
-      var row = [
-        torrent.name,
-        torrent.infoHash,
-        formatBytes(torrent.length, 2),
-        torrent.swarm.numPeers,
-        torrent.swarm.numConns,
-        moment().startOf('day').seconds(torrent.timeRemaining / 1000).format('HH:mm:ss'),
-        (torrent.progress * 100).toFixed(4) + '%',
-        formatBytes(torrent.downloaded, 2),
-        formatBytes(torrent.swarm.downloadSpeed(), 2),
-        formatBytes(torrent.uploaded, 2),
-        formatBytes(torrent.swarm.uploadSpeed(), 2),
-        torrent.ratio
-      ]
-      table.push(row)
-      return row
-    })
-    self.emit('clientData', dataSet)
-    if (self.cliViewStatus) {
-      betterConsole.clear()
-      console.log(table.toString())
-    }
-  }, 100)
 }
 
 MetadataFetcher.prototype.start = function (cb) {
@@ -293,6 +235,65 @@ MetadataFetcher.getHash = function (data) {
   var sha2 = crypto.createHash('sha256')
   var calculatedHash = sha2.update(data).digest('hex')
   return calculatedHash
+}
+
+var formatBytes = function (bytes, decimals) {
+  if (bytes === 0) return '0 Byte'
+  var k = 1024
+  var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  var i = Math.floor(Math.log(bytes) / Math.log(k))
+  return (bytes / Math.pow(k, i)).toPrecision(decimals + 1) + ' ' + sizes[i]
+}
+
+MetadataFetcher.prototype.cliView = function () {
+  this.cliViewStatus = !this.cliViewStatus
+}
+
+MetadataFetcher.prototype.streamClientData = function () {
+  this.streamData = !this.streamData
+  var self = this
+  var dataStream = setInterval(function () {
+    if (!self.streamData) return clearInterval(dataStream)
+    var table = new Table({
+      head: [
+        'Name',
+        'Info hash',
+        'Size',
+        'Peers',
+        'Connections',
+        'Time remaining',
+        'Progress',
+        'Downloaded',
+        'Download speed',
+        'Uploaded',
+        'Upload speed',
+        'Ratio'
+      ]
+    })
+    var dataSet = self.client.torrents.map(function (torrent) {
+      var row = [
+        torrent.name,
+        torrent.infoHash,
+        formatBytes(torrent.length, 2),
+        torrent.swarm.numPeers,
+        torrent.swarm.numConns,
+        moment().startOf('day').seconds(torrent.timeRemaining / 1000).format('HH:mm:ss'),
+        (torrent.progress * 100).toFixed(4) + '%',
+        formatBytes(torrent.downloaded, 2),
+        formatBytes(torrent.swarm.downloadSpeed(), 2),
+        formatBytes(torrent.uploaded, 2),
+        formatBytes(torrent.swarm.uploadSpeed(), 2),
+        torrent.ratio
+      ]
+      table.push(row)
+      return row
+    })
+    self.emit('clientData', dataSet)
+    if (self.cliViewStatus) {
+      betterConsole.clear()
+      console.log(table.toString())
+    }
+  }, 100)
 }
 
 module.exports = MetadataFetcher
