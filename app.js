@@ -17,6 +17,20 @@ var betterConsole = require('better-console')
 var events = require('events')
 var hash = require('crypto-hashing')
 
+MetadataFetcher.prototype.createNewMetaDataFile = function (data, name, folder, cb) {
+  if (typeof folder === 'function') {
+    cb = folder
+    folder = this.spvFolder
+  }
+  data = JSON.stringify(data)
+  var filePath = folder + '/' + name + '.ccm'
+  fs.writeFile(filePath, data, function (err) {
+    if (err) return cb(err)
+    logger.debug('Data File saved: ' + filePath)
+    cb(null, {filePath: filePath, fileName: name})
+  })
+}
+
 var MetadataFetcher = function (customProperties) {
   try {
     var properties_default = ini.parseSync(__dirname + '/settings/properties_default.conf')
@@ -47,12 +61,28 @@ var MetadataFetcher = function (customProperties) {
 
 util.inherits(MetadataFetcher, events.EventEmitter)
 
-// MetadataFetcher.prototype.getMetadata = function (torrentHash, metadataSHA2, importent, cb) {
+MetadataFetcher.prototype.getMetadata = function (torrentHash, metadataSHA2, importent, cb) {
+  var testMag = 'magnet:?xt=urn:btih:' + torrentHash
+  // var testMag = 'magnet:?xt=urn:btih:1eb7cc4083efa26eda476e563c28b7238c5f3683&dn=GIRLS+DO+PORN+-+18+Years+Old+-+Her+First+Hard+Fuck+HD+720p&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Fopen.demonii.com%3A1337&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fexodus.desync.com%3A6969'
+  var handleTorrent = saveTorrentToFolder(this.dataDir + '/test/', this.maxConns)
+  this.client.add(testMag, handleTorrent)
+}
 
-// }
-
-MetadataFetcher.prototype.addMetadata = function (metadata, cb) {
-  var hash256 = hash.sha256(metadata)
+MetadataFetcher.prototype.addMetadata = function (metadata, spv, cb) {
+  var sha2 = MetadataFetcher.getHash(metadata)
+  var self = this
+  async.waterfall([
+    function (callback) {
+      var folder = spv ? self.spvFolder : self.fullNodeFolder
+      self.createNewMetaDataFile(metadata, sha2, folder, callback)
+    },
+    function (result, callback) {
+      self.createTorrentFromMetaData(result.fileName, callback)
+    }
+  ], function (err, result) {
+    if (err) return cb(err)
+    cb(null, {torrentHash: result.infoHash, sha2: sha2})
+  })
 }
 
 // MetadataFetcher.prototype.shareMetadata = function (torrentHash, cb) {
@@ -162,26 +192,7 @@ MetadataFetcher.prototype.publishMetaData = function (data, cb) {
 //   cb(null, hash)
 // }
 
-MetadataFetcher.prototype.createNewMetaDataFile = function (data, pool, cb) {
-  if (typeof pool === 'function') {
-    cb = pool
-    pool = this.spvFolder
-  }
-  var calculatedHash = MetadataFetcher.getHash(JSON.stringify(data))
-  data = JSON.stringify(data)
-  // logger.debug('calculatedHash:' + calculatedHash)
-  // logger.debug('data:' + util.inspect(data))
-
-  var filePath = pool + '/' + calculatedHash + '.dat'
-
-  fs.writeFile(filePath, data, function (err) {
-    if (err) return cb(err)
-    logger.debug('Data File saved: ' + filePath)
-    cb(null, {filePath: filePath, fileName: calculatedHash})
-  })
-}
-
-MetadataFetcher.prototype.createTorrentFromMetaData = function (data, cb) {
+MetadataFetcher.prototype.createTorrentFromMetaData = function (fileName, cb) {
   // {
   //   creationDate: Date       // creation time in UNIX epoch format (default = now)
   //   private: Boolean,        // is this a private .torrent? (default = false)
@@ -189,7 +200,7 @@ MetadataFetcher.prototype.createTorrentFromMetaData = function (data, cb) {
   //   announceList: [[String]] // custom trackers (array of arrays of strings) (see [bep12](http://www.bittorrent.org/beps/bep_0012.html))
   //   urlList: [String]        // web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
   // }
-  var filePath = this.spvFolder + '/' + data + '.dat'
+  var filePath = this.spvFolder + '/' + fileName
 
   var opts = {
     // name: data + '.dat',
@@ -217,7 +228,7 @@ MetadataFetcher.prototype.createTorrentFromMetaData = function (data, cb) {
     if (!err) {
       finish(filePath, data)
     } else if (err.code === 'ENOENT') {
-      filePath = self.fullNodeFolder + '/' + data + '.dat'
+      filePath = self.fullNodeFolder + '/' + fileName
       fs.stat(filePath, function (err, stat) {
         if (err) return cb(err)
         finish(filePath, data)
@@ -232,9 +243,8 @@ MetadataFetcher.getHash = function (data) {
   if (!Buffer.isBuffer(data)) {
     data = new Buffer(data)
   }
-  var sha2 = crypto.createHash('sha256')
-  var calculatedHash = sha2.update(data).digest('hex')
-  return calculatedHash
+  var sha2 = hash.sha256(metadata)
+  return sha2
 }
 
 var formatBytes = function (bytes, decimals) {
