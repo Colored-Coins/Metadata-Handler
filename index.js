@@ -6,7 +6,7 @@ var events = require('events')
 var utils = require('./utils')
 // var torrent_tracker = require(__dirname + '/tracker')
 
-var MetadataFetcher = function (properties) {
+var MetadataHandler = function (properties) {
   // Torrent setup
   this.announce = properties.client.announce
   this.urlList = properties.client.urlList
@@ -42,9 +42,9 @@ var MetadataFetcher = function (properties) {
   this.capper.startWatchMode(properties.folders.autoWatchInterval)
 }
 
-util.inherits(MetadataFetcher, events.EventEmitter)
+util.inherits(MetadataHandler, events.EventEmitter)
 
-MetadataFetcher.prototype.getMetadata = function (torrentHash, metadataSHA2, spv, cb) {
+MetadataHandler.prototype.getMetadata = function (torrentHash, metadataSHA2, spv, cb) {
   // var magLink = 'magnet:?xt=urn:btih:' + torrentHash
   var folderToSave = spv ? this.spvFolder : this.fullNodeFolder
   // var handleTorrent = utils.saveTorrentToFolder(folderToSave, this.maxConns)
@@ -56,7 +56,7 @@ MetadataFetcher.prototype.getMetadata = function (torrentHash, metadataSHA2, spv
   this.client.add(torrentHash, opts)
 }
 
-MetadataFetcher.prototype.addMetadata = function (metadata, cb) {
+MetadataHandler.prototype.addMetadata = function (metadata, cb) {
   var sha2 = utils.getHash(metadata)
   var self = this
   async.waterfall([
@@ -75,7 +75,7 @@ MetadataFetcher.prototype.addMetadata = function (metadata, cb) {
   })
 }
 
-MetadataFetcher.prototype.shareMetadata = function (fileHash, cb) {
+MetadataHandler.prototype.shareMetadata = function (fileHash, cb) {
   var filePath = this.torrentDir + '/' + fileHash + '.torrent'
   this.client.seed(filePath, function (torrent) {
     // Client is seeding the file!
@@ -88,7 +88,7 @@ MetadataFetcher.prototype.shareMetadata = function (fileHash, cb) {
 // this.emit('uploads', err, peer)
 // this.emit('uploads/' + torrentHash, err, metadata)
 
-// MetadataFetcher.prototype.start = function (cb) {
+// MetadataHandler.prototype.start = function (cb) {
 //   var self = this
 //   async.waterfall([
 //     function (callback) {
@@ -136,4 +136,4 @@ MetadataFetcher.prototype.shareMetadata = function (fileHash, cb) {
 //   )
 // }
 
-module.exports = MetadataFetcher
+module.exports = MetadataHandler

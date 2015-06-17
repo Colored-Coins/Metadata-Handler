@@ -1,6 +1,6 @@
 var ini = require('iniparser')
 var _ = require('lodash')
-var MetaDataHandler = require(__dirname + '/../cliView.js')
+var MetadataHandler = require(__dirname + '/../cliView.js')
 
 var properties
 
@@ -17,12 +17,10 @@ try {
   throw new Error('Missing properties')
 }
 
-var handler = new MetaDataHandler(properties)
+var handler = new MetadataHandler(properties)
 var testMag = '5ADD2B0CE8F7DA372C856D4EFE6B9B6E8584919E'
 handler.getMetadata(testMag, null, true)
 
 // console.log(handler)
 
 handler.cliViewStatus = true
-
-
