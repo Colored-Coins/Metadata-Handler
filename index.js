@@ -53,6 +53,7 @@ MetadataHandler.prototype.getMetadata = function (input, sha2, spv, cb) {
   }
   var self = this
   this.client.add(input, opts, function (torrent) {
+    console.log(self.client)
     torrent.on('done', function () {
       utils.merge(torrent, function (err, metadata) {
         if (err) {

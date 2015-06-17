@@ -1,6 +1,6 @@
 {
   "name": "cc-metadata-handler",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Colored Coins metadata handler",
   "main": "app.js",
   "dependencies": {
@@ -37,8 +37,6 @@
   },
   "devDependencies": {
     "jsonfile": "^2.0.1",
-    "mocha": "^2.2.5",
-    "iniparser": "^1.0.5",
-    "lodash": "^3.8.0"
+    "mocha": "^2.2.5"
   }
 }

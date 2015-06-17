@@ -1,25 +1,52 @@
-var ini = require('iniparser')
-var _ = require('lodash')
 var MetadataHandler = require(__dirname + '/../cliView.js')
 
-var properties
-
-try {
-  var properties_default = ini.parseSync(__dirname + '/properties_default.conf')
-  var properties_custom
-  try {
-    properties_custom = ini.parseSync(__dirname + '/properties.conf')
-  } catch (e) {
-    properties_custom = {}
+var properties = {
+  tracker: {
+  udp: true,
+  http: true,
+  ws: true,
+  hostname: '127.0.0.1',
+  port: 8084
+  },
+  client: {
+    torrentPort: 49507,
+    dhtPort: 12679,
+  // Enable DHT (default=true), or options object for DHT
+    // dht: true,
+  // Max number of peers to connect to per torrent (default=100)
+    maxPeers: 100,
+  // DHT protocol node ID (default=randomly generated)
+    // nodeId: String|Buffer,
+  // Wire protocol peer ID (default=randomly generated)
+    // peerId: '01234567890123456789',
+  // RTCPeerConnection configuration object (default=STUN only)
+    // rtcConfig: Object,,
+  // custom storage engine, or `false` to use in-memory engine
+    // storage: Function,
+  // custom webrtc implementation (in node, specify the [wrtc](https://www.npmjs.com/package/wrtc) package)
+    // wrtc: {},
+  // List of additional trackers to use (added to list in .torrent or magnet uri)
+    // announce: [],
+  // List of web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
+    // urlList: []
+  // Whether or not to enable trackers (default=true)
+    tracker: false
+  },
+  folders: {
+    torrents: '/torrents',
+    data: '/data',
+    spvData: '/spv',
+    fullNodeData: '/full',
+    capSize: '80%',
+    retryTime: 10000,
+    autoWatchInterval: 60000,
+    ignores: []
+  },
+  cliView: {
+    streamData: false,
+    cliViewStatus: false
   }
-  properties = _.merge(properties_default, properties_custom)
-} catch (e) {
-  throw new Error('Missing properties')
 }
-
-properties.client.tracker = (properties.client.tracker === 'true')
-properties.cliView.streamData = (properties.cliView.streamData === 'true')
-properties.cliView.cliViewStatus = (properties.cliView.cliViewStatus === 'true')
 
 var handler = new MetadataHandler(properties)
 
@@ -61,4 +88,4 @@ handler.getMetadata(testMag, null, true)
 
 // console.log(handler)
 
-// handler.cliViewStatus = true
+handler.cliViewStatus = true
