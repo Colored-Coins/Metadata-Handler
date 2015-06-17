@@ -44,24 +44,42 @@ var MetadataHandler = function (properties) {
 
 util.inherits(MetadataHandler, events.EventEmitter)
 
-MetadataHandler.prototype.getMetadata = function (torrentHash, metadataSHA2, spv, cb) {
-  // var magLink = 'magnet:?xt=urn:btih:' + torrentHash
+MetadataHandler.prototype.getMetadata = function (input, sha2, spv, cb) {
   var folderToSave = spv ? this.spvFolder : this.fullNodeFolder
-  // var handleTorrent = utils.saveTorrentToFolder(folderToSave, this.maxConns)
   var opts = {
     announce: this.announce, // List of additional trackers to use (added to list in .torrent or magnet uri)
     path: folderToSave,      // Folder where files will be downloaded (default=`/tmp/webtorrent/`)
     verify: true             // Verify previously stored data before starting (default=false)
   }
-  this.client.add(torrentHash, opts)
+  var self = this
+  this.client.add(input, opts, function (torrent) {
+    torrent.on('done', function () {
+      utils.merge(torrent, function (err, metadata) {
+        if (err) {
+          self.emit('error', err)
+          if (cb) cb(err)
+        }
+        if (sha2 && utils.getHash(metadata) !== sha2) {
+          err = new Error(input + ' has failed hash test')
+          self.emit('error', err)
+          if (cb) cb(err)
+          return
+        }
+        self.emit('downloads/' + input, metadata)
+        self.emit('downloads', metadata)
+        if (cb) cb(null, metadata)
+      })
+    })
+  })
 }
 
 MetadataHandler.prototype.addMetadata = function (metadata, cb) {
   var sha2 = utils.getHash(metadata)
+  var fileName = sha2.toString('hex')
   var self = this
   async.waterfall([
     function (callback) {
-      utils.createNewMetaDataFile(metadata, sha2, self.spvFolder, callback)
+      utils.createNewMetaDataFile(metadata, fileName, self.spvFolder, callback)
     },
     function (result, callback) {
       result.torrentDir = self.torrentDir
@@ -70,14 +88,22 @@ MetadataHandler.prototype.addMetadata = function (metadata, cb) {
       utils.createTorrentFromMetaData(result, callback)
     }
   ], function (err, result) {
+    console.log(result)
     if (err) return cb(err)
-    cb(null, {torrentHash: result.infoHash, sha2: sha2})
+    cb(null, {torrentHash: result.torrent.infoHash, sha2: sha2})
   })
 }
 
-MetadataHandler.prototype.shareMetadata = function (fileHash, cb) {
-  var filePath = this.torrentDir + '/' + fileHash + '.torrent'
-  this.client.seed(filePath, function (torrent) {
+MetadataHandler.prototype.shareMetadata = function (fileHash, spv, cb) {
+  if (typeof spv === 'function') {
+    cb = spv
+    spv = true
+  }
+
+  var torrentFilePath = this.torrentDir + '/' + fileHash + '.torrent'
+
+  utils.getFilePathFromTorrent(torrentFilePath, function (dataFilePath) {
+    this.client.seed(dataFilePath, function (torrent) {
     // Client is seeding the file!
     // console.log('Torrent info hash:', torrent.infoHash)
   })

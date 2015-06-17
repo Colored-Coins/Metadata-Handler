@@ -62,7 +62,7 @@ CliView.prototype.streamClientData = function () {
         torrent.ratio
       ]
       table.push(row)
-      console.log('table: ', table)
+      // console.log('table: ', table)
       return row
     })
     self.emit('clientData', dataSet)

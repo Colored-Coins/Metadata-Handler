@@ -68,8 +68,7 @@ You can also use this method together with an event listner like this:
 ```js
 
 // You can listen for the channel of the torrentHash to get the metadata
-handler.on('downloads/'+torrentHash, function (err, metadata) {
-  if (err) return console.error(err)
+handler.on('downloads/'+torrentHash, function (metadata) {
   console.log(metadata) // Will print the the metadata parsed to json
 })
 
@@ -105,8 +104,7 @@ Params:
 ```js
 
 // You can listen for the channel of the torrentHash to get the metadata
-handler.on('uploads/'+torrentHash, function (err, peer) {
-  if (err) return console.error(err)
+handler.on('uploads/'+torrentHash, function (peer) {
   console.log(peer) // Will print information about the latest peer that is trying to download the metadata from your client
 })
 
@@ -121,16 +119,19 @@ handler.shareMetadata(torrentHash, function (err) {
 ```js
 
 // Receives the latest metadata we finished downloading
-handler.on('downloads', function (err, metadata) {
-  if (err) return console.error(err)
+handler.on('downloads', function (metadata) {
   console.log(metadata) // Will print the the metadata parsed to json
 })
 
 // Receives the latest peer that is trying to get a file from our client and the file it's trying to get
-handler.on('uploads', function (err, peer) {
-  if (err) return console.error(err)
+handler.on('uploads', function (peer) {
   console.log(peer.info) // Will print info about the peer
   console.log(peer.file) // Will print info about the file
+})
+
+// If any error occurs
+handler.on('error', function (err) {
+  console.error(err)
 })
 
 ```

@@ -2,6 +2,32 @@ var parseTorrent = require('parse-torrent')
 var fs = require('fs')
 var createTorrent = require('create-torrent')
 var hash = require('crypto-hashing')
+var _ = require('lodash')
+var async = require('async')
+
+var merge = function (torrent, cb) {
+  var folderPath = torrent.opts.path
+  var fileArray = torrent.files
+  var result = {}
+  async.map(fileArray
+    , function (file, callback) {
+      var filePath = folderPath + '/' + file.path
+      fs.readFile(filePath, function (err, data) {
+        if (err) return callback(err)
+        try {
+          var jsonData = JSON.parse(data)
+          return callback(null, jsonData)
+        } catch (e) {
+          return callback(e)
+        }
+      })
+    }
+    , function (err, results) {
+      if (err) return cb(err)
+      cb(null, _.merge(result, results))
+    }
+  )
+}
 
 var getHash = function (data) {
   if (!Buffer.isBuffer(data)) {
@@ -47,8 +73,14 @@ var createTorrentFromMetaData = function (params, cb) {
   })
 }
 
+var getFilePathFromTorrent = function (torrentFilePath, cb) {
+
+}
+
 module.exports = {
   getHash: getHash,
   createNewMetaDataFile: createNewMetaDataFile,
-  createTorrentFromMetaData: createTorrentFromMetaData
+  createTorrentFromMetaData: createTorrentFromMetaData,
+  merge: merge,
+  getFilePathFromTorrent: getFilePathFromTorrent
 }
