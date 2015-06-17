@@ -2,6 +2,7 @@
 logs
 *.log
 log
+vlc-log.txt
 
 # Runtime data
 pids
