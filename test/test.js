@@ -1,4 +1,5 @@
 var MetadataHandler = require(__dirname + '/../cliView.js')
+var fs = require('fs')
 
 var properties = {
   tracker: {
@@ -48,6 +49,17 @@ var properties = {
   }
 }
 
+var folders = []
+folders.push(__dirname + '/..' + properties.folders.torrents)
+folders.push(__dirname + '/..' + properties.folders.data)
+folders.push(__dirname + '/..' + properties.folders.data + properties.folders.spvData)
+folders.push(__dirname + '/..' + properties.folders.data + properties.folders.fullNodeData)
+folders.forEach(function (dir) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir)
+  }
+})
+
 var handler = new MetadataHandler(properties)
 
 var metaData = {
@@ -81,7 +93,7 @@ describe('Torrent Creation', function () {
   })
 
   it('should download wrong data', function (done) {
-    var testMag = '5ADD2B0CE8F7DA372C856D4EFE6B9B6E8584919E'
+    var testMag = '2B12CE09236526A728C6974C0D89D52860E82DAA'
     handler.on('downloads/' + testMag, function (torrent) {
       console.log('downloads: ', torrent)
     })
@@ -91,6 +103,6 @@ describe('Torrent Creation', function () {
       done()
     })
 
-    handler.getMetadata(testMag, null, true)
+    handler.getMetadata(testMag, null, false)
   })
 })
