@@ -2,7 +2,7 @@ var TorrentFS = require(__dirname + '/../app.js')
 var crypto = require('crypto')
 var logger = require(__dirname + '/../logger')('development')
 var assert = require('assert')
-var util = require('util')
+// var util = require('util')
 var torrentApp
 var bufferedData
 var torrentData

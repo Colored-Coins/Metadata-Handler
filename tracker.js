@@ -1,14 +1,13 @@
 var torrentServer = require('bittorrent-tracker')
 var util = require('util')
-var logger = require('./logger')('development')
 
 module.exports = function (properties, cb) {
   // var infoHash = 'aaa67059ed6bd08362da625b3ae77f6f4a075aaa'
 
   var onListening = function () {
-    logger.debug('Traker started')
+    console.log('Traker started')
     // get info hashes for all torrents in the tracker server
-    logger.debug('torrents tracked in this server: ' + util.inspect(Object.keys(server.torrents)))
+    console.log('torrents tracked in this server: ' + util.inspect(Object.keys(server.torrents)))
     cb(null, server)
   }
 
@@ -29,12 +28,12 @@ module.exports = function (properties, cb) {
 
   server.on('error', function (err) {
     // fatal server error!
-    logger.info(err.message)
+    console.log(err.message)
   })
 
   server.on('warning', function (err) {
     // client sent bad data. probably not a problem, just a buggy client.
-    logger.info(err.message)
+    console.log(err.message)
   })
 
   server.on('listening', function (err) {
@@ -51,7 +50,7 @@ module.exports = function (properties, cb) {
 
   // listen for individual tracker messages from peers:
   server.on('start', function (addr) {
-    logger.info('got start message from ' + addr)
+    console.log('got start message from ' + addr)
   })
 
   server.on('complete', function (addr) {})
