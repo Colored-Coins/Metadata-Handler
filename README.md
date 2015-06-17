@@ -1,8 +1,6 @@
 # Colored Coins Metadata Handler
 [![Build Status](https://travis-ci.org/Colored-Coins/Metadata-Handler.svg?branch=master)](https://travis-ci.org/Colored-Coins/Metadata-Handler) [![Coverage Status](https://coveralls.io/repos/Colored-Coins/Metadata-Handler/badge.svg?branch=master)](https://coveralls.io/r/Colored-Coins/Metadata-Handler?branch=master) [![npm version](https://badge.fury.io/js/cc-metadata-handler.svg)](http://badge.fury.io/js/cc-metadata-handler)
 
-#### Currently only works on node version 0.12.2 and above.
-
 ### Installation
 
 ```sh
@@ -15,28 +13,47 @@ $ npm i cc-metadata-handler
 ```js
 var MetadataHandler = require('cc-metadata-handler')
 
-var settings = {
-  "swarm": {                // Torrent swarm settings
-    maxPeers: Number,       // Maximum number of peers per seed/leech
-    maxConns: Number        // Maximum number of connections per seed/leech
-  },
-  "folders": {              // Folder structure settings
-    data: String,           // Main path to where all the data is stored
-    spvData: String,        // Path to where data that is relevent to us is stored relative to the main path
-    fullNodeData: String,   // Path to where data that is not relevent to us is stored relative to the main path
-    torrents: String,       // Path to save torrent files to, if left empty, all the torrent references will be saved in memory and will be lost on restart
-    capSize: Number/String  // Number of MB or precent in the form of 12%
-  },
-  "client": {               // Client settings
-    peerId: String,         // Our torrent peer ID, must be a random 20 byte hex. Best practice is to use sha1 on a random string or use a good random number generator
-    port: Number            // Port to open client on
-  },
-  "server": {               // Tracker settings
+var properties = {
+  tracker: {               // Tracker settings
     udp: Boolean,           // Using udp for torrent trafic or not
     http: Boolean,          // Using http for torrent trafic or not
     ws: Boolean,            // Using websockets for torrent trafic or not
     hostname: String,       // Our machince host name
     port: Number            // Port to listen as tracker
+  }
+  client: {
+    torrentPort: Number,
+    dhtPort: Number,
+  // Enable DHT (default=true), or options object for DHT
+    // dht: true,
+  // Max number of peers to connect to per torrent (default=100)
+    maxPeers: Number,
+  // DHT protocol node ID (default=randomly generated)
+    // nodeId: String|Buffer,
+  // Wire protocol peer ID (default=randomly generated)
+    // peerId: '01234567890123456789',
+  // RTCPeerConnection configuration object (default=STUN only)
+    // rtcConfig: Object,,
+  // custom storage engine, or `false` to use in-memory engine
+    // storage: Function,
+  // custom webrtc implementation (in node, specify the [wrtc](https://www.npmjs.com/package/wrtc) package)
+    // wrtc: {},
+  // List of additional trackers to use (added to list in .torrent or magnet uri)
+    // announce: [],
+  // List of web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
+    // urlList: []
+  // Whether or not to enable trackers (default=true)
+    tracker: false
+  },
+  folders: { // Folder structure settings
+    torrents: '/torrents',  // Path to save torrent files to, if left empty, all the torrent references will be saved in memory and will be lost on restart
+    data: '/data',          // Main path to where all the data is stored
+    spvData: '/spv',        // Path to where data that is relevent to us is stored relative to the main path
+    fullNodeData: '/full',  // Path to where data that is not relevent to us is stored relative to the main path
+    capSize: '80%',          // Number of MB or precent in the form of 12%
+    retryTime: 10000,
+    autoWatchInterval: 60000,
+    ignores: []
   }
 }
 
