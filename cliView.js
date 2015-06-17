@@ -48,7 +48,7 @@ CliView.prototype.streamClientData = function () {
     })
     var dataSet = self.client.torrents.map(function (torrent) {
       var row = [
-        torrent.name,
+        torrent.name || '',
         torrent.infoHash,
         formatBytes(torrent.length, 2),
         torrent.swarm.numPeers,
@@ -62,6 +62,7 @@ CliView.prototype.streamClientData = function () {
         torrent.ratio
       ]
       table.push(row)
+      console.log('table: ', table)
       return row
     })
     self.emit('clientData', dataSet)
@@ -71,3 +72,5 @@ CliView.prototype.streamClientData = function () {
     }
   }, 100)
 }
+
+module.exports = CliView

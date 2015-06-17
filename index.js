@@ -45,7 +45,7 @@ var MetadataFetcher = function (properties) {
 util.inherits(MetadataFetcher, events.EventEmitter)
 
 MetadataFetcher.prototype.getMetadata = function (torrentHash, metadataSHA2, spv, cb) {
-  var magLink = 'magnet:?xt=urn:btih:' + torrentHash
+  // var magLink = 'magnet:?xt=urn:btih:' + torrentHash
   var folderToSave = spv ? this.spvFolder : this.fullNodeFolder
   // var handleTorrent = utils.saveTorrentToFolder(folderToSave, this.maxConns)
   var opts = {
@@ -53,7 +53,7 @@ MetadataFetcher.prototype.getMetadata = function (torrentHash, metadataSHA2, spv
     path: folderToSave,      // Folder where files will be downloaded (default=`/tmp/webtorrent/`)
     verify: true             // Verify previously stored data before starting (default=false)
   }
-  this.client.add(magLink, opts)
+  this.client.add(torrentHash, opts)
 }
 
 MetadataFetcher.prototype.addMetadata = function (metadata, cb) {
@@ -79,7 +79,7 @@ MetadataFetcher.prototype.shareMetadata = function (fileHash, cb) {
   var filePath = this.torrentDir + '/' + fileHash + '.torrent'
   this.client.seed(filePath, function (torrent) {
     // Client is seeding the file!
-    console.log('Torrent info hash:', torrent.infoHash)
+    // console.log('Torrent info hash:', torrent.infoHash)
   })
 }
 
