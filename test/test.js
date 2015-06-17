@@ -1,168 +1,96 @@
-var TorrentFS = require(__dirname + '/../app.js')
-var crypto = require('crypto')
-var logger = require(__dirname + '/../logger')('development')
-var assert = require('assert')
-// var util = require('util')
-var torrentApp
-var bufferedData
-var torrentData
-var calculatedHash
+var MetadataHandler = require(__dirname + '/../cliView.js')
+
+var properties = {
+  tracker: {
+  udp: true,
+  http: true,
+  ws: true,
+  hostname: '127.0.0.1',
+  port: 8084
+  },
+  client: {
+    torrentPort: 49507,
+    dhtPort: 12679,
+  // Enable DHT (default=true), or options object for DHT
+    // dht: true,
+  // Max number of peers to connect to per torrent (default=100)
+    maxPeers: 100,
+  // DHT protocol node ID (default=randomly generated)
+    // nodeId: String|Buffer,
+  // Wire protocol peer ID (default=randomly generated)
+    // peerId: '01234567890123456789',
+  // RTCPeerConnection configuration object (default=STUN only)
+    // rtcConfig: Object,,
+  // custom storage engine, or `false` to use in-memory engine
+    // storage: Function,
+  // custom webrtc implementation (in node, specify the [wrtc](https://www.npmjs.com/package/wrtc) package)
+    // wrtc: {},
+  // List of additional trackers to use (added to list in .torrent or magnet uri)
+    // announce: [],
+  // List of web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
+    // urlList: []
+  // Whether or not to enable trackers (default=true)
+    tracker: false
+  },
+  folders: {
+    torrents: '/torrents',
+    data: '/data',
+    spvData: '/spv',
+    fullNodeData: '/full',
+    capSize: '80%',
+    retryTime: 10000,
+    autoWatchInterval: 60000,
+    ignores: []
+  },
+  cliView: {
+    streamData: false,
+    cliViewStatus: false
+  }
+}
+
+var handler = new MetadataHandler(properties)
+
+var metaData = {
+  a: 'adaad',
+  b: 'adaad',
+  c: 'adaad',
+  d: 'adaad',
+  e: 'adaad',
+  f: 'adaad',
+  g: 'adaad',
+  h: 'adaad',
+  i: 'adaad',
+  j: 'adaad'
+}
 
 describe('Torrent Creation', function () {
   this.timeout(0)
-  before(function (done) {
-    torrentApp = new TorrentFS()
-    torrentApp.start(function (err, server) {
-      if (err) return done(err)
-      // logger.info('Server Object: ' + util.inspect(server))
-      torrentData = {
-        test1: 'test32',
-        test2: 'test212',
-        test13: 'test32',
-        test23: 'test212',
-        test12: 'test32',
-        test21: 'test212'
-      }
-      bufferedData = JSON.stringify(torrentData)
-      // logger.debug('String Data: ' + util.inspect(JSON.stringify(bufferedData)))
-      if (!Buffer.isBuffer(bufferedData)) {
-        bufferedData = new Buffer(bufferedData)
-      }
-      var sha2 = crypto.createHash('sha256')
-      calculatedHash = sha2.update(bufferedData).digest('hex')
-      // logger.debug('Data is: ' + util.inspect(torrentData))
-      // logger.debug('bufferedData: ' + util.inspect(JSON.stringify(bufferedData)))
-      logger.debug('Calculaed sha256 Hash: ' + calculatedHash)
-      done()
-    })
-    // initialize the database
-  })
-
-  after(function () {
-    // clear the database
-    logger.debug('ended testing \'Torrent Creation\'')
-  })
-
-  it('should return a torrent file from JSON data', function (done) {
-    torrentApp.publishMetaData(torrentData, function (err, result) {
-      assert(!err, err)
-      assert(result.torrent.name === calculatedHash + '.dat', 'Wrong Hashing')
-      logger.debug('Torrent Name: ' + result.torrent.name)
-      logger.debug('fileName: ' + result.fileName)
-      logger.debug('filePath: ' + result.filePath)
-      logger.debug('torrent info hash: ' + result.torrent.infoHash)
-      logger.debug('magnetURI: ' + result.magnetURI)
-      // assert(result.name === result.infoHash, 'Wrong hashing Scheme')
-      // logger.debug(util.inspect(result))
-      done()
+  it('should return seed metadata', function (done) {
+    handler.addMetadata(metaData, function (err, result) {
+      if (err) throw err
+      handler.on('uploads/' + result.torrentHash.toString('hex'), function (torrent) {
+        console.log('uploads: ', torrent)
+      })
+      handler.shareMetadata(result.torrentHash.toString('hex'), function (err, torrent) {
+        if (err) throw err
+        console.log('shareMetadata: ', torrent)
+        return done()
+      })
+      console.log(result)
     })
   })
 
-  it('should return a torrent file from Hash name', function (done) {
-    torrentApp.publishMetaData(calculatedHash, function (err, result) {
-      assert(!err, err)
-      assert(result.torrent.name === calculatedHash + '.dat', 'Wrong Hashing')
-      logger.debug('Torrent Name: ' + result.torrent.name)
-      logger.debug('fileName: ' + result.fileName)
-      logger.debug('filePath: ' + result.filePath)
-      logger.debug('torrent info hash: ' + result.torrent.infoHash)
-      logger.debug('magnetURI: ' + result.magnetURI)
-      // assert(result.name === result.infoHash, 'Wrong hashing Scheme')
-      // logger.debug(util.inspect(result))
+  it('should download wrong data', function (done) {
+    var testMag = '5ADD2B0CE8F7DA372C856D4EFE6B9B6E8584919E'
+    handler.on('downloads/' + testMag, function (torrent) {
+      console.log('downloads: ', torrent)
+    })
+
+    handler.on('error', function (error) {
+      console.error(error)
       done()
     })
-  })
 
-  it('should return a error since no data file is found', function (done) {
-    torrentApp.createTorrentFromMetaData(calculatedHash + '0', function (err, result) {
-      assert(err, err)
-      logger.debug('filePath: ' + err)
-      done()
-    })
+    handler.getMetadata(testMag, null, true)
   })
-
-  it('should return a data file', function (done) {
-    torrentData = {
-      test1: 'test32',
-      test2: 'test212'
-    }
-    torrentApp.createNewMetaDataFile(torrentData, function (err, result) {
-      assert(!err, err)
-      assert(result.fileName, result.fileName)
-      assert(result.filePath, result.filePath)
-      logger.debug('fileName: ' + result.fileName)
-      logger.debug('filePath: ' + result.filePath)
-      // assert(result.name === result.infoHash, 'Wrong hashing Scheme')
-      // logger.debug(util.inspect(result))
-      done()
-    })
-  })
-
-  it('should return a torrent file from data in file', function (done) {
-    bufferedData = JSON.stringify(torrentData)
-    // logger.debug('String Data: ' + util.inspect(JSON.stringify(bufferedData)))
-    if (!Buffer.isBuffer(bufferedData)) {
-      bufferedData = new Buffer(bufferedData)
-    }
-    var sha2 = crypto.createHash('sha256')
-    calculatedHash = sha2.update(bufferedData).digest('hex')
-    // logger.debug('Data is: ' + util.inspect(torrentData))
-    // logger.debug('bufferedData: ' + util.inspect(JSON.stringify(bufferedData)))
-    logger.debug('Calculaed sha256 Hash: ' + calculatedHash)
-    torrentApp.createTorrentFromMetaData(calculatedHash, function (err, result) {
-      assert(!err, err)
-      assert(result.torrent.name === calculatedHash + '.dat', 'Wrong Hashing')
-      // assert(!err, err)
-      // result = parseTorrent(result)
-      logger.debug('fileName: ' + result.fileName)
-      logger.debug('filePath: ' + result.filePath)
-      // assert(result.name === calculatedHash, 'Wrong Hashing, Name: ' + result.name + ', Calc Hash: ' + calculatedHash)
-      // assert(result.name === result.infoHash, 'Wrong hashing Scheme')
-      // logger.debug(util.inspect(result))
-      done()
-    })
-  })
-
-  it('should return a data file in full node folder', function (done) {
-    torrentData = {
-      test15: 'test32',
-      test23: 'test212'
-    }
-    torrentApp.createNewMetaDataFile(torrentData, './data/full', function (err, result) {
-      assert(!err, err)
-      assert(result.fileName, result.fileName)
-      assert(result.filePath, result.filePath)
-      logger.debug('fileName: ' + result.fileName)
-      logger.debug('filePath: ' + result.filePath)
-      // assert(result.name === result.infoHash, 'Wrong hashing Scheme')
-      // logger.debug(util.inspect(result))
-      done()
-    })
-  })
-
-  it('should return a torrent file from data in full node folder', function (done) {
-    bufferedData = JSON.stringify(torrentData)
-    // logger.debug('String Data: ' + util.inspect(JSON.stringify(bufferedData)))
-    if (!Buffer.isBuffer(bufferedData)) {
-      bufferedData = new Buffer(bufferedData)
-    }
-    var sha2 = crypto.createHash('sha256')
-    calculatedHash = sha2.update(bufferedData).digest('hex')
-    // logger.debug('Data is: ' + util.inspect(torrentData))
-    // logger.debug('bufferedData: ' + util.inspect(JSON.stringify(bufferedData)))
-    logger.debug('Calculaed sha256 Hash: ' + calculatedHash)
-    torrentApp.createTorrentFromMetaData(calculatedHash, function (err, result) {
-      assert(!err, err)
-      assert(result.torrent.name === calculatedHash + '.dat', 'Wrong Hashing')
-      // assert(!err, err)
-      // result = parseTorrent(result)
-      logger.debug('fileName: ' + result.fileName)
-      logger.debug('filePath: ' + result.filePath)
-      // assert(result.name === calculatedHash, 'Wrong Hashing, Name: ' + result.name + ', Calc Hash: ' + calculatedHash)
-      // assert(result.name === result.infoHash, 'Wrong hashing Scheme')
-      // logger.debug(util.inspect(result))
-      done()
-    })
-  })
-
 })
