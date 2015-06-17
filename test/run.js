@@ -39,7 +39,7 @@ var metaData = {
 handler.addMetadata(metaData, function (err, result) {
   if (err) return console.error(err)
   handler.on('uploads/' + result.torrentHash.toString('hex'), function (torrent) {
-    console.log(torrent)
+    console.log('uploads: ', torrent)
   })
   handler.shareMetadata(result.torrentHash.toString('hex'), function (err, torrent) {
     if (err) return console.error(err)
@@ -50,7 +50,7 @@ handler.addMetadata(metaData, function (err, result) {
 
 var testMag = '5ADD2B0CE8F7DA372C856D4EFE6B9B6E8584919E'
 handler.on('downloads/' + testMag, function (torrent) {
-  // console.log(torrent)
+  console.log('downloads: ', torrent)
 })
 
 handler.on('error', function (error) {
