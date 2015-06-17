@@ -33,10 +33,10 @@ var MetadataHandler = function (properties) {
   this.capper = new FolderCapper(options)
   var self = this
   this.capper.on('full', function (amountToClear) {
-    console.log('Needs to clear: ', amountToClear, ' MB')
+    self.emit('full', amountToClear)
     self.capper.clear(function (err, results) {
-      if (err) return console.error(err)
-      return console.log(results)
+      if (err) return self.emit('error', err)
+      return self.emit('cleanup', results)
     })
   })
   this.capper.startWatchMode(properties.folders.autoWatchInterval)
@@ -88,31 +88,41 @@ MetadataHandler.prototype.addMetadata = function (metadata, cb) {
       utils.createTorrentFromMetaData(result, callback)
     }
   ], function (err, result) {
-    console.log(result)
     if (err) return cb(err)
-    cb(null, {torrentHash: result.torrent.infoHash, sha2: sha2})
+    cb(null, {torrentHash: new Buffer(result.torrent.infoHash, 'hex'), sha2: sha2})
   })
 }
 
-MetadataHandler.prototype.shareMetadata = function (fileHash, spv, cb) {
+MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
   if (typeof spv === 'function') {
     cb = spv
     spv = true
   }
-
-  var torrentFilePath = this.torrentDir + '/' + fileHash + '.torrent'
-
-  utils.getFilePathFromTorrent(torrentFilePath, function (dataFilePath) {
-    this.client.seed(dataFilePath, function (torrent) {
-    // Client is seeding the file!
-    // console.log('Torrent info hash:', torrent.infoHash)
+  if (typeof spv === 'undefined') spv = true
+  var torrentFilePath = this.torrentDir + '/' + infoHash + '.torrent'
+  var self = this
+  utils.getFilePathFromTorrent(torrentFilePath, function (err, dataFileName) {
+    if (err) {
+      self.emit('error', err)
+      if (cb) cb(err)
+      return
+    }
+    var folderToLook = spv ? self.spvFolder : self.fullNodeFolder
+    var dataFilePath = folderToLook + '/' + dataFileName
+    var opts = {
+      name: dataFileName,                 // name of the torrent (default = basename of `path`)
+      comment: 'Colored Coins Metadata',  // free-form textual comments of the author
+      createdBy: 'ColoredCoins-1.0.0',    // name and version of program used to create torrent
+      announceList: self.announce,        // custom trackers (array of arrays of strings) (see [bep12](http://www.bittorrent.org/beps/bep_0012.html))
+      urlList: self.urlList               // web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
+    }
+    self.client.seed(dataFilePath, opts, function (torrent) {
+      self.emit('uploads/' + infoHash, torrent)
+      self.emit('uploads', torrent)
+      if (cb) cb(null, torrent)
+    })
   })
 }
-
-// this.emit('downloads', err, metadata)
-// this.emit('downloads/' + torrentHash, err, peer)
-// this.emit('uploads', err, peer)
-// this.emit('uploads/' + torrentHash, err, metadata)
 
 // MetadataHandler.prototype.start = function (cb) {
 //   var self = this

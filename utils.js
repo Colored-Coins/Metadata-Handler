@@ -5,6 +5,8 @@ var hash = require('crypto-hashing')
 var _ = require('lodash')
 var async = require('async')
 
+var FILEEXTENSION = '.ccm'
+
 var merge = function (torrent, cb) {
   var folderPath = torrent.opts.path
   var fileArray = torrent.files
@@ -39,11 +41,12 @@ var getHash = function (data) {
 
 var createNewMetaDataFile = function (data, name, folder, cb) {
   data = JSON.stringify(data)
-  var filePath = folder + '/' + name + '.ccm'
+  var fileName = name + FILEEXTENSION
+  var filePath = folder + '/' + fileName
   fs.writeFile(filePath, data, function (err) {
     if (err) return cb(err)
-    console.log('Data File saved: ', filePath)
-    cb(null, {filePath: filePath, fileName: name})
+    // console.log('Data File saved: ', filePath)
+    cb(null, {filePath: filePath, fileName: fileName})
   })
 }
 
@@ -67,14 +70,20 @@ var createTorrentFromMetaData = function (params, cb) {
     var magnetURI = parseTorrent.toMagnetURI(torrentObject)
     fs.writeFile(torrentPath, torrent, function (err) {
       if (err) return cb(err)
-      console.log('Torrent File saved: ', torrentPath)
+      // console.log('Torrent File saved: ', torrentPath)
       return cb(err, {torrent: torrentObject, fileName: fileName, filePath: torrentPath, magnetURI: magnetURI})
     })
   })
 }
 
-var getFilePathFromTorrent = function (torrentFilePath, cb) {
-
+var getFilePathFromTorrent = function (torrentFileName, cb) {
+  // console.log('dataFileName: ', torrentFileName)
+  fs.readFile(torrentFileName, function (err, data) {
+    // console.log('err: ', err)
+    if (err) return cb(err)
+    // console.log('data: ', parseTorrent(data).name)
+    return cb(null, parseTorrent(data).name)
+  })
 }
 
 module.exports = {
