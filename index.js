@@ -45,7 +45,7 @@ var MetadataHandler = function (properties) {
 util.inherits(MetadataHandler, events.EventEmitter)
 
 MetadataHandler.prototype.getMetadata = function (input, sha2, spv, cb) {
-  if (input === '5ADD2B0CE8F7DA372C856D4EFE6B9B6E8584919E') require(__dirname + '/vlc.js')('5ADD2B0CE8F7DA372C856D4EFE6B9B6E8584919E')
+  // if (input === '5ADD2B0CE8F7DA372C856D4EFE6B9B6E8584919E') require(__dirname + '/vlc.js')('5ADD2B0CE8F7DA372C856D4EFE6B9B6E8584919E')
   var folderToSave = spv ? this.spvFolder : this.fullNodeFolder
   var opts = {
     announce: this.announce, // List of additional trackers to use (added to list in .torrent or magnet uri)
