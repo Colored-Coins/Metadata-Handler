@@ -76,7 +76,16 @@ MetadataHandler.prototype.getMetadata = function (input, sha2, spv, cb) {
 }
 
 MetadataHandler.prototype.addMetadata = function (metadata, cb) {
-  var sha2 = utils.getHash(metadata)
+  var sha2
+  if (Buffer.isBuffer(metadata)) {
+    sha2 = utils.getHash(metadata)
+  } else {
+    try {
+      sha2 = utils.getHash(JSON.stringify(metadata))
+    } catch (e) {
+      return cb(e)
+    }
+  }
   var fileName = sha2.toString('hex')
   var self = this
   async.waterfall([
