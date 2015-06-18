@@ -11,11 +11,11 @@ var MetadataHandler = function (properties) {
   this.announce = properties.client.announce
   this.urlList = properties.client.urlList
 
-  // File system propeties
-  this.dataDir = __dirname + properties.folders.data
+  // File system propertie
+  this.dataDir = properties.folders.data
   this.spvFolder = this.dataDir + properties.folders.spvData
   this.fullNodeFolder = this.dataDir + properties.folders.fullNodeData
-  this.torrentDir = __dirname + properties.folders.torrents
+  this.torrentDir = properties.folders.torrents
 
   // Folder Capper Settings
   var options = {

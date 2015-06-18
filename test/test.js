@@ -34,8 +34,8 @@ var properties = {
     tracker: false
   },
   folders: {
-    torrents: '/torrents',
-    data: '/data',
+    torrents: './torrents',
+    data: './data',
     spvData: '/spv',
     fullNodeData: '/full',
     capSize: '80%',
@@ -50,10 +50,10 @@ var properties = {
 }
 
 var folders = []
-folders.push(__dirname + '/..' + properties.folders.torrents)
-folders.push(__dirname + '/..' + properties.folders.data)
-folders.push(__dirname + '/..' + properties.folders.data + properties.folders.spvData)
-folders.push(__dirname + '/..' + properties.folders.data + properties.folders.fullNodeData)
+folders.push(properties.folders.torrents)
+folders.push(properties.folders.data)
+folders.push(properties.folders.data + properties.folders.spvData)
+folders.push(properties.folders.data + properties.folders.fullNodeData)
 folders.forEach(function (dir) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir)
