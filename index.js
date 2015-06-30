@@ -127,6 +127,7 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
       announceList: self.announce,        // custom trackers (array of arrays of strings) (see [bep12](http://www.bittorrent.org/beps/bep_0012.html))
       urlList: self.urlList               // web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
     }
+    self.client.on('error', function (err) {console.error(err)})
     self.client.seed(dataFilePath, opts, function (torrent) {
       self.emit('uploads/' + infoHash, torrent)
       self.emit('uploads', torrent)
