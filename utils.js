@@ -1,5 +1,5 @@
 var parseTorrent = require('parse-torrent')
-var fs = require('fs')
+var fs = require('graceful-fs')
 var createTorrent = require('create-torrent')
 var hash = require('crypto-hashing')
 var _ = require('lodash')
