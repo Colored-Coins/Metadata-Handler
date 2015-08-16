@@ -2,13 +2,6 @@ var MetadataHandler = require(__dirname + '/../cliView.js')
 var fs = require('fs')
 
 var properties = {
-  tracker: {
-  udp: true,
-  http: true,
-  ws: true,
-  hostname: '127.0.0.1',
-  port: 8084
-  },
   client: {
     torrentPort: 49507,
     dhtPort: 12679,
