@@ -1,5 +1,5 @@
 # Colored Coins Metadata Handler
-[![Build Status](https://travis-ci.org/Colored-Coins/Metadata-Handler.svg?branch=master)](https://travis-ci.org/Colored-Coins/Metadata-Handler) [![Coverage Status](https://coveralls.io/repos/Colored-Coins/Metadata-Handler/badge.svg?branch=master)](https://coveralls.io/r/Colored-Coins/Metadata-Handler?branch=master) [![npm version](https://badge.fury.io/js/cc-metadata-handler.svg)](http://badge.fury.io/js/cc-metadata-handler)
+[![Build Status](https://travis-ci.org/Colored-Coins/Metadata-Handler.svg?branch=master)](https://travis-ci.org/Colored-Coins/Metadata-Handler) [![Coverage Status](https://coveralls.io/repos/Colored-Coins/Metadata-Handler/badge.svg?branch=master)](https://coveralls.io/r/Colored-Coins/Metadata-Handler?branch=master) [![npm version](https://badge.fury.io/js/cc-metadata-handler.svg)](http://badge.fury.io/js/cc-metadata-handler) [![npm version](http://slack.coloredcoins.org/badge.svg)](http://slack.coloredcoins.org)
 
 ### Installation
 
