@@ -52,7 +52,7 @@ var properties = {
     data: '/data',          // Main path to where all the data is stored
     spvData: '/spv',        // Path to where data that is relevent to us is stored relative to the main path
     fullNodeData: '/full',  // Path to where data that is not relevent to us is stored relative to the main path
-    capSize: '80%',          // Number of MB or precent in the form of 12%
+    capSize: '80%',          // Number of MB or percent in the form of 12%
     retryTime: 10000,
     autoWatchInterval: 60000,
     ignores: []
