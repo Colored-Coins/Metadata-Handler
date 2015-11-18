@@ -1,4 +1,4 @@
-var MetadataHandler = require(__dirname + '/../cliView.js')
+var MetadataHandler = require('../index.js')
 var fs = require('fs')
 
 var properties = {
@@ -35,10 +35,6 @@ var properties = {
     retryTime: 10000,
     autoWatchInterval: 60000,
     ignores: []
-  },
-  cliView: {
-    streamData: false,
-    cliViewStatus: false
   }
 }
 
@@ -74,26 +70,26 @@ describe('Torrent Creation', function () {
     handler.addMetadata(metaData, function (err, result) {
       if (err) throw err
       handler.on('uploads/' + result.torrentHash.toString('hex'), function (torrent) {
-        console.log('uploads: ', torrent)
+        // console.log('uploads: ', torrent)
       })
       handler.shareMetadata(result.torrentHash.toString('hex'), function (err, torrent) {
         if (err) throw err
-        console.log('shareMetadata: ', torrent)
+        // console.log('shareMetadata: ', torrent)
         return done()
       })
-      console.log(result)
+      // console.log(result)
     })
   })
 
   it('should download wrong data', function (done) {
     var testMag = '2B12CE09236526A728C6974C0D89D52860E82DAA'
     handler.on('downloads/' + testMag, function (torrent) {
-      console.log('downloads: ', torrent)
+      // console.log('downloads: ', torrent)
     })
 
     handler.on('error', function (error) {
-      console.error(error)
-      done()
+      // console.error(error)
+      if (error) done()
     })
 
     handler.getMetadata(testMag, null, false)

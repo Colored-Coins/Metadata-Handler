@@ -30,4 +30,5 @@ data
 torrents
 properties.conf
 users.htpasswd
+/playground
 *.dat

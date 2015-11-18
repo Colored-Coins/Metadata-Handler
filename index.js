@@ -3,7 +3,13 @@ var FolderCapper = require('folder-capper')
 var async = require('async')
 var WebTorrent = require('webtorrent')
 var events = require('events')
-var utils = require('./utils')
+var parseTorrent = require('parse-torrent')
+var fs = require('graceful-fs')
+var createTorrent = require('create-torrent')
+var hash = require('crypto-hashing')
+var _ = require('lodash')
+
+var FILEEXTENSION = '.ccm'
 
 var MetadataHandler = function (properties) {
   // Torrent setup
@@ -43,8 +49,81 @@ var MetadataHandler = function (properties) {
 
 util.inherits(MetadataHandler, events.EventEmitter)
 
+var merge = function (torrent, cb) {
+  var folderPath = torrent.path
+  var fileArray = torrent.files
+  var result = {}
+  async.map(fileArray
+    , function (file, callback) {
+      var filePath = folderPath + '/' + file.path
+      fs.readFile(filePath, function (err, data) {
+        if (err) return callback(err)
+        try {
+          var jsonData = JSON.parse(data)
+          return callback(null, jsonData)
+        } catch (e) {
+          return callback(e)
+        }
+      })
+    }
+    , function (err, results) {
+      if (err) return cb(err)
+      cb(null, _.merge(result, results))
+    }
+  )
+}
+
+var getHash = function (data) {
+  if (!Buffer.isBuffer(data)) {
+    data = new Buffer(data)
+  }
+  var sha2 = hash.sha256(data)
+  return sha2
+}
+
+var createNewMetaDataFile = function (data, name, folder, cb) {
+  data = JSON.stringify(data)
+  var fileName = name + FILEEXTENSION
+  var filePath = folder + '/' + fileName
+  fs.writeFile(filePath, data, function (err) {
+    if (err) return cb(err)
+    cb(null, {filePath: filePath, fileName: fileName})
+  })
+}
+
+var createTorrentFromMetaData = function (params, cb) {
+  var opts = {
+    name: params.fileName,              // name of the torrent (default = basename of `path`)
+    comment: 'Colored Coins Metadata',  // free-form textual comments of the author
+    createdBy: 'ColoredCoins-1.0.0',    // name and version of program used to create torrent
+    announceList: params.announce,      // custom trackers (array of arrays of strings) (see [bep12](http://www.bittorrent.org/beps/bep_0012.html))
+    creationDate: params.creationDate,  // creation time in UNIX epoch format (default = now)
+    private: params.private,            // is this a private .torrent? (default = false)
+    urlList: params.urlList,            // web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
+    pieceLength: params.pieceLength     // force a custom piece length (number of bytes)
+  }
+
+  createTorrent(params.filePath, opts, function (err, torrent) {
+    if (err) return cb(err)
+    var torrentObject = parseTorrent(torrent)
+    var fileName = torrentObject.infoHash + '.torrent'
+    var torrentPath = params.torrentDir + '/' + fileName
+    var magnetURI = parseTorrent.toMagnetURI(torrentObject)
+    fs.writeFile(torrentPath, torrent, function (err) {
+      if (err) return cb(err)
+      return cb(err, {torrent: torrentObject, fileName: fileName, filePath: torrentPath, magnetURI: magnetURI})
+    })
+  })
+}
+
+var getFilePathFromTorrent = function (torrentFileName, cb) {
+  fs.readFile(torrentFileName, function (err, data) {
+    if (err) return cb(err)
+    return cb(null, parseTorrent(data).name)
+  })
+}
+
 MetadataHandler.prototype.getMetadata = function (input, sha2, spv, cb) {
-  // if (input === '5ADD2B0CE8F7DA372C856D4EFE6B9B6E8584919E') require(__dirname + '/vlc.js')('5ADD2B0CE8F7DA372C856D4EFE6B9B6E8584919E')
   var folderToSave = spv ? this.spvFolder : this.fullNodeFolder
   var opts = {
     announce: this.announce, // List of additional trackers to use (added to list in .torrent or magnet uri)
@@ -53,14 +132,13 @@ MetadataHandler.prototype.getMetadata = function (input, sha2, spv, cb) {
   }
   var self = this
   this.client.add(input, opts, function (torrent) {
-    // console.log(self.client)
     torrent.on('done', function () {
-      utils.merge(torrent, function (err, metadata) {
+      merge(torrent, function (err, metadata) {
         if (err) {
           self.emit('error', err)
           if (cb) cb(err)
         }
-        if (sha2 && utils.getHash(metadata) !== sha2) {
+        if (sha2 && getHash(metadata) !== sha2) {
           err = new Error(input + ' has failed hash test')
           self.emit('error', err)
           if (cb) cb(err)
@@ -77,10 +155,10 @@ MetadataHandler.prototype.getMetadata = function (input, sha2, spv, cb) {
 MetadataHandler.prototype.addMetadata = function (metadata, cb) {
   var sha2
   if (Buffer.isBuffer(metadata)) {
-    sha2 = utils.getHash(metadata)
+    sha2 = getHash(metadata)
   } else {
     try {
-      sha2 = utils.getHash(JSON.stringify(metadata))
+      sha2 = getHash(JSON.stringify(metadata))
     } catch (e) {
       return cb(e)
     }
@@ -89,13 +167,13 @@ MetadataHandler.prototype.addMetadata = function (metadata, cb) {
   var self = this
   async.waterfall([
     function (callback) {
-      utils.createNewMetaDataFile(metadata, fileName, self.spvFolder, callback)
+      createNewMetaDataFile(metadata, fileName, self.spvFolder, callback)
     },
     function (result, callback) {
       result.torrentDir = self.torrentDir
       result.announce = self.announce
       result.urlList = self.urlList
-      utils.createTorrentFromMetaData(result, callback)
+      createTorrentFromMetaData(result, callback)
     }
   ], function (err, result) {
     if (err) return cb(err)
@@ -111,7 +189,7 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
   if (typeof spv === 'undefined') spv = true
   var torrentFilePath = this.torrentDir + '/' + infoHash + '.torrent'
   var self = this
-  utils.getFilePathFromTorrent(torrentFilePath, function (err, dataFileName) {
+  getFilePathFromTorrent(torrentFilePath, function (err, dataFileName) {
     if (err) {
       self.emit('error', err)
       if (cb) cb(err)
