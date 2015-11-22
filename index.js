@@ -1,5 +1,5 @@
 var util = require('util')
-var FolderCapper = require('folder-capper')
+// var FolderCapper = require('folder-capper')
 var async = require('async')
 var WebTorrent = require('webtorrent')
 var events = require('events')
@@ -23,28 +23,28 @@ var MetadataHandler = function (properties) {
   this.torrentDir = properties.folders.torrents
 
   // Folder Capper Settings
-  var options = {
-    folderToClear: this.fullNodeFolder,
-    ignores: properties.folders.ignores,
-    folderToCap: this.dataDir,
-    capSize: properties.folders.capSize,
-    retryTime: properties.folders.retryTime
-  }
+  // var options = {
+  //   folderToClear: this.fullNodeFolder,
+  //   ignores: properties.folders.ignores,
+  //   folderToCap: this.dataDir,
+  //   capSize: properties.folders.capSize,
+  //   retryTime: properties.folders.retryTime
+  // }
 
   // Start the torrent Client
   this.client = new WebTorrent(properties.client)
 
-  // Start the floder capper
-  this.capper = new FolderCapper(options)
-  var self = this
-  this.capper.on('full', function (amountToClear) {
-    self.emit('full', amountToClear)
-    self.capper.clear(function (err, results) {
-      if (err) return self.emit('error', err)
-      return self.emit('cleanup', results)
-    })
-  })
-  this.capper.startWatchMode(properties.folders.autoWatchInterval)
+  // // Start the floder capper
+  // this.capper = new FolderCapper(options)
+  // var self = this
+  // this.capper.on('full', function (amountToClear) {
+  //   self.emit('full', amountToClear)
+  //   self.capper.clear(function (err, results) {
+  //     if (err) return self.emit('error', err)
+  //     return self.emit('cleanup', results)
+  //   })
+  // })
+  // this.capper.startWatchMode(properties.folders.autoWatchInterval)
 }
 
 util.inherits(MetadataHandler, events.EventEmitter)
