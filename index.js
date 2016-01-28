@@ -182,13 +182,9 @@ MetadataHandler.prototype.addMetadata = function (metadata, cb) {
 }
 
 MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
-  if (typeof spv === 'function') {
-    cb = spv
-    spv = true
-  }
-  if (typeof spv === 'undefined') spv = true
-  var torrentFilePath = this.torrentDir + '/' + infoHash + '.torrent'
   var self = this
+  var torrentFilePath = this.torrentDir + '/' + infoHash + '.torrent'
+  var torrent = fs.readFileSync(torrentFilePath)
   getFilePathFromTorrent(torrentFilePath, function (err, dataFileName) {
     if (err) {
       self.emit('error', err)
@@ -206,11 +202,27 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
     }
     self.client.on('error', function (err) {console.error(err)})
     self.client.seed(dataFilePath, opts, function (torrent) {
+      console.log('onseed() - torrent.infoHash = ', torrent.infoHash)
       self.emit('uploads/' + infoHash, torrent)
       self.emit('uploads', torrent)
       if (cb) cb(null, torrent)
     })
   })
+}
+
+MetadataHandler.prototype.shareMetadataBulks = function (infoHashes, spv, cb) {
+  if (typeof spv === 'function') {
+    cb = spv
+    spv = true
+  }
+  if (typeof spv === 'undefined') spv = true
+
+  var self = this
+  var i = 1
+  async.eachSeries(infoHashes, function (infoHash, callback) {
+    console.log('Start seeding : ' + infoHash + ', # ' + i++)
+    self.shareMetadata(infoHash, spv, callback)
+  }, cb)
 }
 
 module.exports = MetadataHandler
