@@ -22,6 +22,9 @@ var MetadataHandler = function (properties) {
   this.fullNodeFolder = this.dataDir + properties.folders.fullNodeData
   this.torrentDir = properties.folders.torrents
 
+  this.seedConcurrency = properties.seedConcurrency
+
+
   // Folder Capper Settings
   // var options = {
   //   folderToClear: this.fullNodeFolder,
@@ -218,11 +221,25 @@ MetadataHandler.prototype.shareMetadataBulks = function (infoHashes, spv, cb) {
   if (typeof spv === 'undefined') spv = true
 
   var self = this
-  var i = 1
-  async.eachSeries(infoHashes, function (infoHash, callback) {
-    console.log('Start seeding : ' + infoHash + ', # ' + i++)
-    self.shareMetadata(infoHash, spv, callback)
-  }, cb)
+  var cargoCount = 0
+  var cargo = async.cargo(function (infoHashes, callback) {
+    var count = 0;
+    for (var i = 0 ; i < infoHashes.length ; i++) {
+      console.log('Start seeding : ' + infoHashes[i] + ', # ' + (cargoCount * self.seedConcurrency +  i))
+      self.shareMetadata(infoHashes[i], spv, function(err) {
+        count++
+        if (count == infoHashes.length) {
+          callback(err)
+        }
+      })
+    }
+  }, self.seedConcurrency)
+  
+  infoHashes.forEach(function (infoHash) {
+    cargo.push(infoHash, function(err) {
+      if (err) return console.error("Error in shareMetadata()! err = ", err)
+    })
+  })
 }
 
 module.exports = MetadataHandler
