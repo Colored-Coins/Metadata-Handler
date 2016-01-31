@@ -213,7 +213,7 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
   })
 }
 
-MetadataHandler.prototype.shareMetadataBulks = function (infoHashes, spv, cb) {
+MetadataHandler.prototype.shareMetadataSequential = function (allInfoHashes, seedConcurrency, spv, cb) {
   if (typeof spv === 'function') {
     cb = spv
     spv = true
@@ -225,17 +225,21 @@ MetadataHandler.prototype.shareMetadataBulks = function (infoHashes, spv, cb) {
   var cargo = async.cargo(function (infoHashes, callback) {
     var count = 0;
     for (var i = 0 ; i < infoHashes.length ; i++) {
-      console.log('Start seeding : ' + infoHashes[i] + ', # ' + (cargoCount * self.seedConcurrency +  i))
+      console.log('Start seeding : ' + infoHashes[i] + ', # ' + (cargoCount * seedConcurrency +  i))
       self.shareMetadata(infoHashes[i], spv, function(err) {
         count++
         if (count == infoHashes.length) {
-          callback(err)
+          cargoCount++
+          if (cargoCount != Math.ceil(allInfoHashes.length / seedConcurrency)) {
+            return callback(err)
+          }
+          return cb(err)
         }
       })
     }
-  }, self.seedConcurrency)
+  }, seedConcurrency)
   
-  infoHashes.forEach(function (infoHash) {
+  allInfoHashes.forEach(function (infoHash) {
     cargo.push(infoHash, function(err) {
       if (err) return console.error("Error in shareMetadata()! err = ", err)
     })
