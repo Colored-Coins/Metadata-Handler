@@ -20,7 +20,7 @@ var properties = {
   // custom webrtc implementation (in node, specify the [wrtc](https://www.npmjs.com/package/wrtc) package)
     // wrtc: {},
   // List of additional trackers to use (added to list in .torrent or magnet uri)
-    // announce: [],
+    announce: [['udp://tracker.openbittorrent.com:80', 'udp://open.demonii.com:1337', 'udp://tracker.coppersurfer.tk:6969', 'udp://tracker.leechers-paradise.org:6969']],
   // List of web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
     // urlList: []
   // Whether or not to enable trackers (default=true)

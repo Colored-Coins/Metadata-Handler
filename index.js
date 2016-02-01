@@ -163,9 +163,14 @@ MetadataHandler.prototype.addMetadata = function (metadata, cb) {
 }
 
 MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
+  if (typeof spv === 'function') {
+    cb = spv
+    spv = true
+  }
+  if (typeof spv === 'undefined') spv = true
+
   var self = this
   var torrentFilePath = this.torrentDir + '/' + infoHash + '.torrent'
-  var torrent = fs.readFileSync(torrentFilePath)
   getFilePathFromTorrent(torrentFilePath, function (err, dataFileName) {
     if (err) {
       self.emit('error', err)
