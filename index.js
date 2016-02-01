@@ -24,30 +24,8 @@ var MetadataHandler = function (properties) {
 
   this.seedConcurrency = properties.seedConcurrency
 
-
-  // Folder Capper Settings
-  // var options = {
-  //   folderToClear: this.fullNodeFolder,
-  //   ignores: properties.folders.ignores,
-  //   folderToCap: this.dataDir,
-  //   capSize: properties.folders.capSize,
-  //   retryTime: properties.folders.retryTime
-  // }
-
   // Start the torrent Client
   this.client = new WebTorrent(properties.client)
-
-  // // Start the floder capper
-  // this.capper = new FolderCapper(options)
-  // var self = this
-  // this.capper.on('full', function (amountToClear) {
-  //   self.emit('full', amountToClear)
-  //   self.capper.clear(function (err, results) {
-  //     if (err) return self.emit('error', err)
-  //     return self.emit('cleanup', results)
-  //   })
-  // })
-  // this.capper.startWatchMode(properties.folders.autoWatchInterval)
 }
 
 util.inherits(MetadataHandler, events.EventEmitter)
@@ -213,7 +191,7 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
   })
 }
 
-MetadataHandler.prototype.shareMetadataSequential = function (allInfoHashes, seedConcurrency, spv, cb) {
+MetadataHandler.prototype.shareMetadataSequential = function (allInfoHashes, spv, cb) {
   if (typeof spv === 'function') {
     cb = spv
     spv = true
@@ -221,7 +199,8 @@ MetadataHandler.prototype.shareMetadataSequential = function (allInfoHashes, see
   if (typeof spv === 'undefined') spv = true
 
   var self = this
-  var cargoCount = 0
+  var cargoCount = 0  //how many times cargo executed all its tasks
+  var seedConcurrency = self.seedConcurrency
   var cargo = async.cargo(function (infoHashes, callback) {
     var count = 0;
     for (var i = 0 ; i < infoHashes.length ; i++) {
@@ -233,7 +212,7 @@ MetadataHandler.prototype.shareMetadataSequential = function (allInfoHashes, see
           if (cargoCount != Math.ceil(allInfoHashes.length / seedConcurrency)) {
             return callback(err)
           }
-          return cb(err)
+          return cb(err)  //callback of the entire function shareMetadataSequential
         }
       })
     }
