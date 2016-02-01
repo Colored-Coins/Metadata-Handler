@@ -4,7 +4,7 @@
   "description": "Colored Coins metadata handler",
   "main": "app.js",
   "dependencies": {
-    "async": "^0.9.0",
+    "async": "^1.5.2",
     "better-console": "^0.2.4",
     "bittorrent-tracker": "4.1.2",
     "cli-table": "^0.3.1",
