@@ -22,8 +22,6 @@ var MetadataHandler = function (properties) {
   this.fullNodeFolder = this.dataDir + properties.folders.fullNodeData
   this.torrentDir = properties.folders.torrents
 
-  this.seedConcurrency = properties.seedConcurrency
-
   // Start the torrent Client
   this.client = new WebTorrent(properties.client)
 }
