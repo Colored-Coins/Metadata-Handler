@@ -196,38 +196,4 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
   })
 }
 
-MetadataHandler.prototype.shareMetadataSequential = function (allInfoHashes, spv, cb) {
-  if (typeof spv === 'function') {
-    cb = spv
-    spv = true
-  }
-  if (typeof spv === 'undefined') spv = true
-
-  var self = this
-  var cargoCount = 0  //how many times cargo executed all its tasks
-  var seedConcurrency = self.seedConcurrency
-  var cargo = async.cargo(function (infoHashes, callback) {
-    var count = 0;
-    for (var i = 0 ; i < infoHashes.length ; i++) {
-      console.log('Start seeding : ' + infoHashes[i] + ', # ' + (cargoCount * seedConcurrency +  i))
-      self.shareMetadata(infoHashes[i], spv, function(err) {
-        count++
-        if (count == infoHashes.length) {
-          cargoCount++
-          if (cargoCount != Math.ceil(allInfoHashes.length / seedConcurrency)) {
-            return callback(err)
-          }
-          return cb(err)  //callback of the entire function shareMetadataSequential
-        }
-      })
-    }
-  }, seedConcurrency)
-  
-  allInfoHashes.forEach(function (infoHash) {
-    cargo.push(infoHash, function(err) {
-      if (err) return console.error("Error in shareMetadata()! err = ", err)
-    })
-  })
-}
-
 module.exports = MetadataHandler
