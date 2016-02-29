@@ -98,7 +98,13 @@ var createTorrentFromMetaData = function (params, cb) {
 var getFilePathFromTorrent = function (torrentFileName, cb) {
   fs.readFile(torrentFileName, function (err, data) {
     if (err) return cb(err)
-    return cb(null, parseTorrent(data).name)
+    var parsedTorrent
+    try {
+      parsedTorrent = parseTorrent(data)
+    } catch (err) {
+      return cb(err)
+    }
+    return cb(null, parsedTorrent.name)
   })
 }
 
