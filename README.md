@@ -133,6 +133,22 @@ handler.shareMetadata(torrentHash, function (err) {
 
 ```
 
+### Remove Metadata
+
+Remove torrent from BitTorrent client. Destroy all torrent connections to peers, delete all saved data.
+
+Params:
+  - torrentHash - The torrent info hash of the metadata we want to remove 
+
+```js
+
+handler.removeMetadata(torrentHash, function (err) {
+  if (err) throw err
+  console.log('successfully deleted torrent')
+})
+
+```
+
 ### Other Events
 
 ```js
