@@ -95,7 +95,7 @@ var createTorrentFromMetaData = function (params, cb) {
   })
 }
 
-var getFilePathFromTorrent = function (torrentFileName, cb) {
+var getFileNameFromTorrent = function (torrentFileName, cb) {
   fs.readFile(torrentFileName, function (err, data) {
     if (err) return cb(err)
     var parsedTorrent
@@ -175,7 +175,7 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
 
   var self = this
   var torrentFilePath = this.torrentDir + '/' + infoHash + '.torrent'
-  getFilePathFromTorrent(torrentFilePath, function (err, dataFileName) {
+  getFileNameFromTorrent(torrentFilePath, function (err, dataFileName) {
     if (err) {
       self.emit('error', err)
       if (cb) cb(err)
@@ -197,6 +197,39 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
       self.emit('uploads', torrent)
       if (cb) cb(null, torrent)
     })
+  })
+}
+
+MetadataHandler.prototype.removeMetadata = function (infoHash, spv, cb) {
+  var self = this
+  var torrentFilePath = self.torrentDir + '/' + infoHash + '.torrent'
+  async.auto({
+    removeTorrentFromClient: function (cb) {
+      self.client.remove(infoHash, cb)
+    },
+    deleteTorrentFile: function (cb) {
+      fs.unlink(torrentFilePath, cb)
+    },
+    getDataFileName: function (cb) {
+      getFileNameFromTorrent(torrentFilePath, cb)
+    },
+    deleteMetdataFile: ['getDataFileName', function (cb, results) {
+      var dataFileName = results.getDataFileName
+      var folderToLook = spv ? self.spvFolder : self.fullNodeFolder
+      var dataFilePath = folderToLook + '/' + dataFileName
+      fs.unlink(dataFilePath, cb)
+    }],
+    deleteTorrentFile: ['getDataFileName', function (cb) {
+      fs.unlink(torrentFilePath, cb)
+    }]
+  },
+  function (err) {
+    if (err) {
+      self.emit('error', err)
+      if (cb) cb(err)
+      return
+    }
+    cb()
   })
 }
 
