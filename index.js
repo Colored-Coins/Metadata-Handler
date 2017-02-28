@@ -18,8 +18,6 @@ var MetadataHandler = function (properties) {
 
   // File system propertie
   this.dataDir = properties.folders.data
-  this.spvFolder = this.dataDir + properties.folders.spvData
-  this.fullNodeFolder = this.dataDir + properties.folders.fullNodeData
   this.torrentDir = properties.folders.torrents
 
   // Start the torrent Client
@@ -108,11 +106,10 @@ var getFileNameFromTorrent = function (torrentFileName, cb) {
   })
 }
 
-MetadataHandler.prototype.getMetadata = function (input, sha2, spv, cb) {
-  var folderToSave = spv ? this.spvFolder : this.fullNodeFolder
+MetadataHandler.prototype.getMetadata = function (input, sha2, cb) {
   var opts = {
     announce: this.announce, // List of additional trackers to use (added to list in .torrent or magnet uri)
-    path: folderToSave,      // Folder where files will be downloaded (default=`/tmp/webtorrent/`)
+    path: this.dataDir,      // Folder where files will be downloaded (default=`/tmp/webtorrent/`)
     verify: true             // Verify previously stored data before starting (default=false)
   }
   var self = this
@@ -152,7 +149,7 @@ MetadataHandler.prototype.addMetadata = function (metadata, cb) {
   var self = this
   async.waterfall([
     function (callback) {
-      createNewMetaDataFile(metadata, fileName, self.spvFolder, callback)
+      createNewMetaDataFile(metadata, fileName, self.dataDir, callback)
     },
     function (result, callback) {
       result.torrentDir = self.torrentDir
@@ -166,13 +163,7 @@ MetadataHandler.prototype.addMetadata = function (metadata, cb) {
   })
 }
 
-MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
-  if (typeof spv === 'function') {
-    cb = spv
-    spv = true
-  }
-  if (typeof spv === 'undefined') spv = true
-
+MetadataHandler.prototype.shareMetadata = function (infoHash, cb) {
   var self = this
   var torrentFilePath = this.torrentDir + '/' + infoHash + '.torrent'
   getFileNameFromTorrent(torrentFilePath, function (err, dataFileName) {
@@ -181,8 +172,7 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
       if (cb) cb(err)
       return
     }
-    var folderToLook = spv ? self.spvFolder : self.fullNodeFolder
-    var dataFilePath = folderToLook + '/' + dataFileName
+    var dataFilePath = self.dataDir + '/' + dataFileName
     var opts = {
       name: dataFileName,                 // name of the torrent (default = basename of `path`)
       comment: 'Colored Coins Metadata',  // free-form textual comments of the author
@@ -200,7 +190,7 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
   })
 }
 
-MetadataHandler.prototype.removeMetadata = function (infoHash, spv, cb) {
+MetadataHandler.prototype.removeMetadata = function (infoHash, cb) {
   var self = this
   var torrentFilePath = self.torrentDir + '/' + infoHash + '.torrent'
   async.auto({
@@ -215,8 +205,7 @@ MetadataHandler.prototype.removeMetadata = function (infoHash, spv, cb) {
     },
     deleteMetdataFile: ['getDataFileName', function (cb, results) {
       var dataFileName = results.getDataFileName
-      var folderToLook = spv ? self.spvFolder : self.fullNodeFolder
-      var dataFilePath = folderToLook + '/' + dataFileName
+      var dataFilePath = self.dataDir + '/' + dataFileName
       fs.unlink(dataFilePath, cb)
     }],
     deleteTorrentFile: ['getDataFileName', function (cb) {
