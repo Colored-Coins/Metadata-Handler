@@ -14,7 +14,7 @@
     "lodash": "^3.9.3",
     "moment": "^2.10.3",
     "parse-torrent": "^4.1.0",
-    "webtorrent": "0.78.0"
+    "webtorrent": "0.95.2"
   },
   "scripts": {
     "test": "mocha",

@@ -79,7 +79,7 @@ var createTorrentFromMetaData = function (params, cb) {
     urlList: params.urlList,            // web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
     pieceLength: params.pieceLength     // force a custom piece length (number of bytes)
   }
-
+  console.log('opts', JSON.stringify(opts))
   createTorrent(params.filePath, opts, function (err, torrent) {
     if (err) return cb(err)
     var torrentObject = parseTorrent(torrent)
@@ -182,7 +182,7 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, cb) {
     }
     self.client.on('error', function (err) {console.error(err)})
     self.client.seed(dataFilePath, opts, function (torrent) {
-      console.log('onseed() - torrent.infoHash = ', torrent.infoHash)
+      // console.log('onseed() - torrent.infoHash = ', torrent.infoHash)
       self.emit('uploads/' + infoHash, torrent)
       self.emit('uploads', torrent)
       if (cb) cb(null, torrent)
@@ -193,16 +193,14 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, cb) {
 MetadataHandler.prototype.removeMetadata = function (infoHash, cb) {
   var self = this
   var torrentFilePath = self.torrentDir + '/' + infoHash + '.torrent'
+  // console.log('removeMetadata: client.torrents =', self.client.torrents)
   async.auto({
     removeTorrentFromClient: function (cb) {
       self.client.remove(infoHash, cb)
     },
-    deleteTorrentFile: function (cb) {
-      fs.unlink(torrentFilePath, cb)
-    },
-    getDataFileName: function (cb) {
+    getDataFileName: ['removeTorrentFromClient', function (cb) {
       getFileNameFromTorrent(torrentFilePath, cb)
-    },
+    }],
     deleteMetdataFile: ['getDataFileName', function (cb, results) {
       var dataFileName = results.getDataFileName
       var dataFilePath = self.dataDir + '/' + dataFileName
