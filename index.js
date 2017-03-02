@@ -79,7 +79,6 @@ var createTorrentFromMetaData = function (params, cb) {
     urlList: params.urlList,            // web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
     pieceLength: params.pieceLength     // force a custom piece length (number of bytes)
   }
-  console.log('opts', JSON.stringify(opts))
   createTorrent(params.filePath, opts, function (err, torrent) {
     if (err) return cb(err)
     var torrentObject = parseTorrent(torrent)
