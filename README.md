@@ -65,15 +65,13 @@ var handler = new MetadataHandler(settings)
 Params:
   - torrentHash - The torrent infoHash of the metadata.
   - metadataSHA2 - The sha256 of the metadata json.
-  - importent - A boolean flag which determines if the metadata will be saved forever or possibly deleted when folder reaches max limit size.
 
 ```js
 
 var torrentHash = '5add2b0ce8f7da372c856d4efe6b9b6e8584919e'
 var metadataSHA2 = '6ed0dd02806fa89e25de060c19d3ac86cabb87d6a0ddd05c333b84f4'
-var importent = true
 
-handler.getMetadata(torrentHash, metadataSHA2, importent, function (err, metadata) {
+handler.getMetadata(torrentHash, metadataSHA2, function (err, metadata) {
   if (err) return console.error(err)
   console.log(metadata) // Will print the json file of the metadata
 })
@@ -107,7 +105,7 @@ Params:
 // Returns the torrentHash and sha2 created.
 handler.addMetadata(metadata, function (err, hashes) {
   if (err) return console.error(err)
-  console.log(hashes.torrentHash) // Will print Bit-torrent hashing scheme using sha1 as the hashing algorithem
+  console.log(hashes.torrentHash) // Will print BitTorrent hashing scheme using sha1 as the hashing algorithem
   console.log(hashes.sha2) // Will print the sha256 of the raw metadata file
 })
 
