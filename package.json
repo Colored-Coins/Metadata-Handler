@@ -13,8 +13,8 @@
     "graceful-fs": "^4.1.2",
     "lodash": "^3.9.3",
     "moment": "^2.10.3",
-    "parse-torrent": "^4.1.0",
-    "webtorrent": "git+https://github.com/oleiba/webtorrent.git#0.78.0-create-torrent@3.12"
+    "parse-torrent": "^5.1.0",
+    "webtorrent": "git+https://github.com/oleiba/webtorrent.git#0.95.2-create-torrent@3.12"
   },
   "scripts": {
     "test": "mocha",

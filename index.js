@@ -181,7 +181,6 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, cb) {
     }
     self.client.on('error', function (err) {console.error(err)})
     self.client.seed(dataFilePath, opts, function (torrent) {
-      // console.log('onseed() - torrent.infoHash = ', torrent.infoHash)
       self.emit('uploads/' + infoHash, torrent)
       self.emit('uploads', torrent)
       if (cb) cb(null, torrent)
@@ -192,7 +191,6 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, cb) {
 MetadataHandler.prototype.removeMetadata = function (infoHash, cb) {
   var self = this
   var torrentFilePath = self.torrentDir + '/' + infoHash + '.torrent'
-  // console.log('removeMetadata: client.torrents =', self.client.torrents)
   async.auto({
     removeTorrentFromClient: function (cb) {
       self.client.remove(infoHash, cb)
