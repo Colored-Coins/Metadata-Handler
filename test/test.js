@@ -29,8 +29,6 @@ var properties = {
   folders: {
     torrents: './torrents',
     data: './data',
-    spvData: '/spv',
-    fullNodeData: '/full',
     capSize: '80%',
     retryTime: 10000,
     autoWatchInterval: 60000,
@@ -41,8 +39,6 @@ var properties = {
 var folders = []
 folders.push(properties.folders.torrents)
 folders.push(properties.folders.data)
-folders.push(properties.folders.data + properties.folders.spvData)
-folders.push(properties.folders.data + properties.folders.fullNodeData)
 folders.forEach(function (dir) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir)

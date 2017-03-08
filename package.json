@@ -7,14 +7,14 @@
     "async": "^1.5.2",
     "better-console": "^0.2.4",
     "cli-table": "^0.3.1",
-    "create-torrent": "git+https://github.com/oleiba/create-torrent.git#allow_empty_announce",
+    "create-torrent": "3.12.0",
     "crypto-hashing": "^0.3.1",
     "folder-capper": "^0.2.1",
     "graceful-fs": "^4.1.2",
     "lodash": "^3.9.3",
     "moment": "^2.10.3",
-    "parse-torrent": "^4.1.0",
-    "webtorrent": "0.78.0"
+    "parse-torrent": "^5.1.0",
+    "webtorrent": "git+https://github.com/oleiba/webtorrent.git#0.78.1-create-torrent@3.12"
   },
   "scripts": {
     "test": "mocha",

@@ -18,8 +18,6 @@ var MetadataHandler = function (properties) {
 
   // File system propertie
   this.dataDir = properties.folders.data
-  this.spvFolder = this.dataDir + properties.folders.spvData
-  this.fullNodeFolder = this.dataDir + properties.folders.fullNodeData
   this.torrentDir = properties.folders.torrents
 
   // Start the torrent Client
@@ -81,7 +79,6 @@ var createTorrentFromMetaData = function (params, cb) {
     urlList: params.urlList,            // web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
     pieceLength: params.pieceLength     // force a custom piece length (number of bytes)
   }
-
   createTorrent(params.filePath, opts, function (err, torrent) {
     if (err) return cb(err)
     var torrentObject = parseTorrent(torrent)
@@ -95,7 +92,7 @@ var createTorrentFromMetaData = function (params, cb) {
   })
 }
 
-var getFilePathFromTorrent = function (torrentFileName, cb) {
+var getFileNameFromTorrent = function (torrentFileName, cb) {
   fs.readFile(torrentFileName, function (err, data) {
     if (err) return cb(err)
     var parsedTorrent
@@ -108,11 +105,10 @@ var getFilePathFromTorrent = function (torrentFileName, cb) {
   })
 }
 
-MetadataHandler.prototype.getMetadata = function (input, sha2, spv, cb) {
-  var folderToSave = spv ? this.spvFolder : this.fullNodeFolder
+MetadataHandler.prototype.getMetadata = function (input, sha2, cb) {
   var opts = {
     announce: this.announce, // List of additional trackers to use (added to list in .torrent or magnet uri)
-    path: folderToSave,      // Folder where files will be downloaded (default=`/tmp/webtorrent/`)
+    path: this.dataDir,      // Folder where files will be downloaded (default=`/tmp/webtorrent/`)
     verify: true             // Verify previously stored data before starting (default=false)
   }
   var self = this
@@ -152,7 +148,7 @@ MetadataHandler.prototype.addMetadata = function (metadata, cb) {
   var self = this
   async.waterfall([
     function (callback) {
-      createNewMetaDataFile(metadata, fileName, self.spvFolder, callback)
+      createNewMetaDataFile(metadata, fileName, self.dataDir, callback)
     },
     function (result, callback) {
       result.torrentDir = self.torrentDir
@@ -166,23 +162,16 @@ MetadataHandler.prototype.addMetadata = function (metadata, cb) {
   })
 }
 
-MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
-  if (typeof spv === 'function') {
-    cb = spv
-    spv = true
-  }
-  if (typeof spv === 'undefined') spv = true
-
+MetadataHandler.prototype.shareMetadata = function (infoHash, cb) {
   var self = this
   var torrentFilePath = this.torrentDir + '/' + infoHash + '.torrent'
-  getFilePathFromTorrent(torrentFilePath, function (err, dataFileName) {
+  getFileNameFromTorrent(torrentFilePath, function (err, dataFileName) {
     if (err) {
       self.emit('error', err)
       if (cb) cb(err)
       return
     }
-    var folderToLook = spv ? self.spvFolder : self.fullNodeFolder
-    var dataFilePath = folderToLook + '/' + dataFileName
+    var dataFilePath = self.dataDir + '/' + dataFileName
     var opts = {
       name: dataFileName,                 // name of the torrent (default = basename of `path`)
       comment: 'Colored Coins Metadata',  // free-form textual comments of the author
@@ -192,11 +181,39 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, spv, cb) {
     }
     self.client.on('error', function (err) {console.error(err)})
     self.client.seed(dataFilePath, opts, function (torrent) {
-      console.log('onseed() - torrent.infoHash = ', torrent.infoHash)
       self.emit('uploads/' + infoHash, torrent)
       self.emit('uploads', torrent)
       if (cb) cb(null, torrent)
     })
+  })
+}
+
+MetadataHandler.prototype.removeMetadata = function (infoHash, cb) {
+  var self = this
+  var torrentFilePath = self.torrentDir + '/' + infoHash + '.torrent'
+  async.auto({
+    removeTorrentFromClient: function (cb) {
+      self.client.remove(infoHash, cb)
+    },
+    getDataFileName: ['removeTorrentFromClient', function (cb) {
+      getFileNameFromTorrent(torrentFilePath, cb)
+    }],
+    deleteMetdataFile: ['getDataFileName', function (cb, results) {
+      var dataFileName = results.getDataFileName
+      var dataFilePath = self.dataDir + '/' + dataFileName
+      fs.unlink(dataFilePath, cb)
+    }],
+    deleteTorrentFile: ['getDataFileName', function (cb) {
+      fs.unlink(torrentFilePath, cb)
+    }]
+  },
+  function (err) {
+    if (err) {
+      self.emit('error', err)
+      if (cb) cb(err)
+      return
+    }
+    cb()
   })
 }
 
