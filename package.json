@@ -22,7 +22,7 @@
     "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "author": "thehobbit85",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": [
     "torrent",
     "webtorrent",
