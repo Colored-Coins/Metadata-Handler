@@ -22,7 +22,7 @@ var properties = {
     ws: Boolean,            // Using websockets for torrent trafic or not
     hostname: String,       // Our machince host name
     port: Number            // Port to listen as tracker
-  }
+  },
   client: {
     torrentPort: Number,
     dhtPort: Number,
@@ -57,7 +57,7 @@ var properties = {
   }
 }
 
-var handler = new MetadataHandler(settings)
+var handler = new MetadataHandler(properties)
 ```
 
 ### Fetch Metadata
@@ -134,7 +134,7 @@ handler.shareMetadata(torrentHash, function (err) {
 Remove torrent from BitTorrent client. Destroy all torrent connections to peers, delete all saved data.
 
 Params:
-  - torrentHash - The torrent info hash of the metadata we want to remove 
+  - torrentHash - The torrent info hash of the metadata we want to remove
 
 ```js
 
