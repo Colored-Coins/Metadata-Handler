@@ -27,7 +27,7 @@ var MetadataHandler = function (properties) {
   var self = this
   this.client.on('error', function (err) {
     self.emit('error', err)
-    for (let cb of self.pendingCallbacks) {
+    for (var cb of self.pendingCallbacks) {
       self.pendingCallbacks.delete(cb)
       cb(err)
     }
