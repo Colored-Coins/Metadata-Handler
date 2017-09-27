@@ -22,6 +22,16 @@ var MetadataHandler = function (properties) {
 
   // Start the torrent Client
   this.client = new WebTorrent(properties.client)
+    
+  this.pendingCallbacks = new Set();
+  var self = this
+  this.client.on('error', function (err) {
+    self.emit('error', err)
+    for (var cb of self.pendingCallbacks) {
+      self.pendingCallbacks.delete(cb)
+      cb(err)
+    }
+  })
 }
 
 util.inherits(MetadataHandler, events.EventEmitter)
@@ -112,22 +122,34 @@ MetadataHandler.prototype.getMetadata = function (input, sha2, cb) {
     verify: true             // Verify previously stored data before starting (default=false)
   }
   var self = this
+  if (cb && !self.pendingCallbacks.has(cb)) {
+      self.pendingCallbacks.add(cb)
+  }
   this.client.add(input, opts, function (torrent) {
     torrent.on('done', function () {
       merge(torrent, function (err, metadata) {
         if (err) {
           self.emit('error', err)
-          if (cb) cb(err)
+          if (cb && self.pendingCallbacks.has(cb)) {
+            self.pendingCallbacks.delete(cb)
+            cb(err)
+          }
         }
         if (sha2 && getHash(metadata) !== sha2) {
           err = new Error(input + ' has failed hash test')
           self.emit('error', err)
-          if (cb) cb(err)
+          if (cb && self.pendingCallbacks.has(cb)) {
+            self.pendingCallbacks.delete(cb)
+            cb(err)
+          }
           return
         }
         self.emit('downloads/' + input, metadata)
         self.emit('downloads', metadata)
-        if (cb) cb(null, metadata)
+        if (cb && self.pendingCallbacks.has(cb)) {
+            self.pendingCallbacks.delete(cb)
+            cb(null, metadata)
+        }
       })
     })
   })
@@ -164,11 +186,17 @@ MetadataHandler.prototype.addMetadata = function (metadata, cb) {
 
 MetadataHandler.prototype.shareMetadata = function (infoHash, cb) {
   var self = this
+  if (cb && !self.pendingCallbacks.has(cb)) {
+    self.pendingCallbacks.add(cb)
+  }
   var torrentFilePath = this.torrentDir + '/' + infoHash + '.torrent'
   getFileNameFromTorrent(torrentFilePath, function (err, dataFileName) {
     if (err) {
       self.emit('error', err)
-      if (cb) cb(err)
+      if (cb && self.pendingCallbacks.has(cb)) {
+        self.pendingCallbacks.delete(cb)
+        cb(err)
+      }
       return
     }
     var dataFilePath = self.dataDir + '/' + dataFileName
@@ -179,11 +207,13 @@ MetadataHandler.prototype.shareMetadata = function (infoHash, cb) {
       announceList: self.announce,        // custom trackers (array of arrays of strings) (see [bep12](http://www.bittorrent.org/beps/bep_0012.html))
       urlList: self.urlList               // web seed urls (see [bep19](http://www.bittorrent.org/beps/bep_0019.html))
     }
-    self.client.on('error', function (err) {console.error(err)})
     self.client.seed(dataFilePath, opts, function (torrent) {
       self.emit('uploads/' + infoHash, torrent)
       self.emit('uploads', torrent)
-      if (cb) cb(null, torrent)
+      if (cb && self.pendingCallbacks.has(cb)) {
+        self.pendingCallbacks.delete(cb)
+          cb(null, torrent)
+      }
     })
   })
 }
@@ -193,7 +223,15 @@ MetadataHandler.prototype.removeMetadata = function (infoHash, cb) {
   var torrentFilePath = self.torrentDir + '/' + infoHash + '.torrent'
   async.auto({
     removeTorrentFromClient: function (cb) {
-      self.client.remove(infoHash, cb)
+      if (cb && !self.pendingCallbacks.has(cb)) {
+        self.pendingCallbacks.add(cb)
+      }
+      self.client.remove(infoHash, function (err) {
+        if (cb && self.pendingCallbacks.has(cb)) {
+          self.pendingCallbacks.delete(cb)
+          cb(err)
+        }
+      })
     },
     getDataFileName: ['removeTorrentFromClient', function (cb) {
       getFileNameFromTorrent(torrentFilePath, cb)
